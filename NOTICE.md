@@ -1,5 +1,4 @@
-This software is based on Grafana:
+Copyright 2014-2021 Grafana Labs
 
-Copyright 2014-2022 Grafana Labs
-which is based on 
+This software is based on Kibana:
 Copyright 2012-2013 Elasticsearch BV

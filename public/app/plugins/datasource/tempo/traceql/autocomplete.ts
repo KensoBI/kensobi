@@ -124,7 +124,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return CompletionProvider.operators.map((key) => ({
           label: key,
           insertText: key,
-          type: 'OPERATOR' as CompletionType,
+          type: 'OPERATOR',
         }));
       case 'SPANSET_IN_VALUE':
         const tagName = this.overrideTagName(situation.tagName);
@@ -153,7 +153,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return CompletionProvider.logicalOps.concat('}').map((key) => ({
           label: key,
           insertText: key,
-          type: 'OPERATOR' as CompletionType,
+          type: 'OPERATOR',
         }));
       default:
         throw new Error(`Unexpected situation ${situation}`);
@@ -166,7 +166,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       .map((key) => ({
         label: key,
         insertText: (prepend || '') + key,
-        type: 'TAG_NAME' as CompletionType,
+        type: 'TAG_NAME',
       }));
   }
 
@@ -174,7 +174,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     return CompletionProvider.intrinsics.map((key) => ({
       label: key,
       insertText: (prepend || '') + key,
-      type: 'KEYWORD' as CompletionType,
+      type: 'KEYWORD',
     }));
   }
 
@@ -182,7 +182,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     return CompletionProvider.scopes.map((key) => ({
       label: key,
       insertText: (prepend || '') + key,
-      type: 'SCOPE' as CompletionType,
+      type: 'SCOPE',
     }));
   }
 
