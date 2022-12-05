@@ -33,13 +33,13 @@ export function TopSearchBarInput() {
   };
 
   if (isSmallScreen) {
-    return <ToolbarButton iconOnly icon="search" aria-label="Search Grafana" onClick={onOpenSearch} />;
+    return <ToolbarButton iconOnly icon="search" aria-label="Search KensoBI" onClick={onOpenSearch} />;
   }
 
   return (
     <FilterInput
       onClick={onOpenSearch}
-      placeholder={t('nav.search.placeholder', 'Search Grafana')}
+      placeholder={t('nav.search.placeholder', 'Search KensoBI')}
       value={state.query ?? ''}
       onChange={onSearchChange}
     />

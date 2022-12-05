@@ -10,7 +10,11 @@ export interface BrandComponentProps {
 }
 
 export const LoginLogo: FC<BrandComponentProps & { logo?: string }> = ({ className, logo }) => {
-  return <img className={className} src={`${logo ? logo : 'public/img/grafana_icon.svg'}`} alt="Grafana" />;
+  const maxSize = css`
+    max-width: 150px;
+  `;
+
+  return <img className={cx(className, maxSize)} src={`${logo ? logo : 'public/img/kensobi_icon.svg'}`} alt="KensoBI" />;
 };
 
 const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
@@ -24,9 +28,10 @@ const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
       right: 0;
       bottom: 0;
       top: 0;
-      background: url(public/img/g8_login_${theme.isDark ? 'dark' : 'light'}.svg);
+      background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)),
+      url(public/img/lenny-kuhne.jpg) no-repeat center center fixed;
       background-position: top center;
-      background-size: auto;
+      background-size: cover;
       background-repeat: no-repeat;
 
       opacity: 0;
@@ -43,7 +48,7 @@ const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
 };
 
 const MenuLogo: FC<BrandComponentProps> = ({ className }) => {
-  return <img className={className} src="public/img/grafana_icon.svg" alt="Grafana" />;
+  return <img className={className} src="public/img/kensobi_icon.svg" alt="KensoBI" />;
 };
 
 const LoginBoxBackground = () => {
@@ -59,8 +64,8 @@ export class Branding {
   static LoginBackground = LoginBackground;
   static MenuLogo = MenuLogo;
   static LoginBoxBackground = LoginBoxBackground;
-  static AppTitle = 'Grafana';
-  static LoginTitle = 'Welcome to Grafana';
+  static AppTitle = 'KensoBI';
+  static LoginTitle = 'Welcome to KensoBI';
   static GetLoginSubTitle = (): null | string => {
     return null;
   };
