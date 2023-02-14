@@ -12,17 +12,17 @@ const step2Key = `${keyPrefix}${step2TutorialTitle.replace(' ', '-').trim().toLo
 
 export const getSteps = (): SetupStep[] => [
   {
-    heading: 'Welcome to Grafana',
-    subheading: 'The steps below will guide you to quickly finish setting up your Grafana installation.',
+    heading: 'Welcome to KensoBI',
+    subheading: 'The steps below will guide you to quickly finish setting up your KensoBI installation.',
     title: 'Basic',
-    info: 'The steps below will guide you to quickly finish setting up your Grafana installation.',
+    info: 'The steps below will guide you to quickly finish setting up your KensoBI installation.',
     done: false,
     cards: [
       {
         type: 'tutorial',
         heading: 'Data source and dashboards',
         title: step1TutorialTitle,
-        info: 'Set up and understand Grafana if you have no prior experience. This tutorial guides you through the entire process and covers the “Data source” and “Dashboards” steps to the right.',
+        info: 'This tutorial guides you through the entire process and covers the “Data source” and “Dashboards” steps to the right.',
         href: 'https://grafana.com/tutorials/grafana-fundamentals',
         icon: 'grafana',
         check: () => Promise.resolve(store.get(step1Key)),
@@ -67,7 +67,7 @@ export const getSteps = (): SetupStep[] => [
   {
     heading: 'Setup complete!',
     subheading:
-      'All necessary steps to use Grafana are done. Now tackle advanced steps or make the best use of this home dashboard – it is, after all, a fully customizable dashboard – and remove this panel.',
+      'All necessary steps to use KensoBI are done. Now tackle advanced steps or make the best use of this home dashboard – it is, after all, a fully customizable dashboard – and remove this panel.',
     title: 'Advanced',
     info: ' Manage your users and teams and add plugins. These steps are optional',
     done: false,

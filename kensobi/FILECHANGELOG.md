@@ -46,3 +46,8 @@ public/img/browserconfig.xml
 public/img/icons/mono/grafana.svg
 public/img/mstile-150x150.png
 public/views/index-template.html
+
+public/app/plugins/panel/gettingstarted/steps.ts
+public/app/plugins/panel/welcome/Welcome.tsx
+public/dashboards/default.json
+public/dashboards/home.json
