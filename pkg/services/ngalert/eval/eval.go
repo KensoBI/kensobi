@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -239,7 +240,24 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 		Headers: buildDatasourceHeaders(ctx),
 	}
 
-	datasources := make(map[string]*datasources.DataSource, len(data))
+	dsMap := make(map[string]*datasources.DataSource, len(data))
+	getDs := func(uid string) (*datasources.DataSource, error) {
+		ds, ok := dsMap[uid]
+
+		if !ok {
+			if expr.IsDataSource(uid) {
+				ds = expr.DataSourceModel()
+			} else {
+				var err error
+				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, uid, ctx.User, true)
+				if err != nil {
+					return nil, err
+				}
+			}
+			dsMap[uid] = ds
+		}
+		return ds, nil
+	}
 
 	for _, q := range data {
 		model, err := q.GetModel()
@@ -256,28 +274,57 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 			return nil, fmt.Errorf("failed to retrieve maxDatapoints from '%s': %w", q.RefID, err)
 		}
 
-		ds, ok := datasources[q.DatasourceUID]
-		if !ok {
-			if expr.IsDataSource(q.DatasourceUID) {
-				ds = expr.DataSourceModel()
-			} else {
-				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, true)
-				if err != nil {
-					return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
-				}
-			}
-			datasources[q.DatasourceUID] = ds
+		ds, err := getDs(q.DatasourceUID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
 		}
 
-		req.Queries = append(req.Queries, expr.Query{
-			TimeRange:     q.RelativeTimeRange.ToTimeRange(),
-			DataSource:    ds,
-			JSON:          model,
-			Interval:      interval,
-			RefID:         q.RefID,
-			MaxDataPoints: maxDatapoints,
-			QueryType:     q.QueryType,
-		})
+		if ds.Type == "kensobi-feature-datasource" {
+			pluginUid, err := ds.JsonData.GetPath("dbPlugin", "ref", "uid").String()
+			if err != nil {
+				continue
+			}
+			proxyDs, err := getDs(pluginUid)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get proxy datasource build query '%s': %w", q.RefID, err)
+			}
+
+			timeseriesQuery, err := q.GetModelJson().GetPath("finalQuery", "timeseries").String()
+			if err != nil {
+				continue
+			}
+
+			proxyModel, err := simplejson.NewFromAny(map[string]interface{}{
+				"format": "time_series",
+				"rawSql": timeseriesQuery,
+			}).MarshalJSON()
+
+			if err != nil {
+				continue
+			}
+
+			req.Queries = append(req.Queries, expr.Query{
+				TimeRange:     q.RelativeTimeRange.ToTimeRange(),
+				DataSource:    proxyDs,
+				JSON:          proxyModel,
+				Interval:      interval,
+				RefID:         q.RefID,
+				MaxDataPoints: maxDatapoints,
+				QueryType:     q.QueryType,
+			})
+
+			fmt.Printf("Hello from kenso DEBUG message")
+		} else {
+			req.Queries = append(req.Queries, expr.Query{
+				TimeRange:     q.RelativeTimeRange.ToTimeRange(),
+				DataSource:    ds,
+				JSON:          model,
+				Interval:      interval,
+				RefID:         q.RefID,
+				MaxDataPoints: maxDatapoints,
+				QueryType:     q.QueryType,
+			})
+		}
 	}
 	return req, nil
 }
