@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 )
 
@@ -278,4 +279,8 @@ func (aq *AlertQuery) PreSave() error {
 		return fmt.Errorf("invalid relative time range: %+v", aq.RelativeTimeRange)
 	}
 	return nil
+}
+
+func (aq *AlertQuery) GetModelJson() *simplejson.Json {
+	return simplejson.NewFromAny(aq.modelProps)
 }
