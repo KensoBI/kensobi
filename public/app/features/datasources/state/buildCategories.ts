@@ -4,6 +4,7 @@ import { DataSourcePluginCategory } from 'app/types';
 
 export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePluginCategory[] {
   const categories: DataSourcePluginCategory[] = [
+    { id: 'kenso', title: 'Kenso BI', plugins: [] },
     { id: 'tsdb', title: 'Time series databases', plugins: [] },
     { id: 'logging', title: 'Logging & document databases', plugins: [] },
     { id: 'tracing', title: 'Distributed tracing', plugins: [] },
