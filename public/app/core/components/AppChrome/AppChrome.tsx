@@ -30,12 +30,13 @@ export function AppChrome({ children }: Props) {
     [styles.content]: true,
     [styles.contentNoSearchBar]: searchBarHidden,
     [styles.contentChromeless]: state.chromeless,
+    [styles.printHide]: true,
   });
 
   return (
     <main className="main-view">
       {!state.chromeless && (
-        <div className={cx(styles.topNav)}>
+        <div className={`${cx(styles.topNav)} dontPrint`}>
           {!searchBarHidden && <TopSearchBar />}
           <NavToolbar
             searchBarHidden={searchBarHidden}
@@ -83,5 +84,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.background.primary,
       flexDirection: 'column',
     }),
+    printHide: css`
+      @media print {
+        padding: 0 !important;
+      }
+    `,
   };
 };

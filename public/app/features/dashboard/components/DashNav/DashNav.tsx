@@ -65,6 +65,15 @@ interface DashNavButtonModel {
 const customLeftActions: DashNavButtonModel[] = [];
 const customRightActions: DashNavButtonModel[] = [];
 
+type CSSStyleDeclarationWithZoom = CSSStyleDeclaration & {
+  zoom?: string;
+};
+
+function setZoomStyle(element: HTMLElement, zoom: number) {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  (element.style as CSSStyleDeclarationWithZoom).zoom = zoom.toString();
+}
+
 export function addCustomLeftAction(content: DashNavButtonModel) {
   customLeftActions.push(content);
 }
@@ -194,6 +203,38 @@ export const DashNav = React.memo<Props>((props) => {
         </ModalsController>
       );
     }
+
+    buttons.push(
+      <DashNavButton
+        tooltip={'Print current View'}
+        icon="file-alt"
+        iconSize="lg"
+        onClick={() => {
+          onbeforeprint = (event) => {
+            function xToPx(x: string) {
+              const div = document.createElement('div');
+              div.style.display = 'block';
+              div.style.height = x;
+              document.body.appendChild(div);
+              const px = parseFloat(window.getComputedStyle(div, null).height);
+              if (div.parentNode) {
+                div.parentNode.removeChild(div);
+              }
+              return px;
+            }
+
+            const desiredWidth = xToPx('297mm');
+            const bodyWidth = document.body.clientWidth;
+            const scale = desiredWidth / bodyWidth;
+            setZoomStyle(document.body, scale);
+          };
+          onafterprint = (event) => {
+            setZoomStyle(document.body, 1);
+          };
+          window.print();
+        }}
+      />
+    );
 
     if (dashboard.meta.publicDashboardEnabled) {
       buttons.push(

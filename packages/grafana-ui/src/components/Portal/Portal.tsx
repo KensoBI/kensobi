@@ -46,7 +46,7 @@ export function getPortalContainer() {
 
 /** @internal */
 export function PortalContainer() {
-  return <div id="grafana-portal-container" />;
+  return <div id="grafana-portal-container" className="dontPrint" />;
 }
 
 export const RefForwardingPortal = React.forwardRef<HTMLDivElement, Props>((props, ref) => {
