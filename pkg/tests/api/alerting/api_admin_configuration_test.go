@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
@@ -25,7 +26,9 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
+func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	const disableOrgID int64 = 3
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:          true,
@@ -126,11 +129,11 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	// Add an alertmanager datasource
 	{
 		cmd := datasources.AddDataSourceCommand{
-			OrgId:  1,
+			OrgID:  1,
 			Name:   "AM1",
 			Type:   datasources.DS_ALERTMANAGER,
 			Access: "proxy",
-			Url:    fakeAM1.URL(),
+			URL:    fakeAM1.URL(),
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"handleGrafanaManagedAlerts": true,
 				"implementation":             "prometheus",
@@ -153,11 +156,11 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	// Add another alertmanager datasource
 	{
 		cmd := datasources.AddDataSourceCommand{
-			OrgId:  1,
+			OrgID:  1,
 			Name:   "AM2",
 			Type:   datasources.DS_ALERTMANAGER,
 			Access: "proxy",
-			Url:    fakeAM2.URL(),
+			URL:    fakeAM2.URL(),
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"handleGrafanaManagedAlerts": true,
 				"implementation":             "prometheus",
@@ -244,14 +247,14 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiring",
 						Condition: "A",
-						Data: []ngmodels.AlertQuery{
+						Data: []apimodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: ngmodels.RelativeTimeRange{
-									From: ngmodels.Duration(time.Duration(5) * time.Hour),
-									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(time.Duration(5) * time.Hour),
+									To:   apimodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 								"type": "math",
 								"expression": "2 + 3 > 1"
@@ -272,7 +275,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		_ = postRequest(t, ruleURL, buf.String(), http.StatusAccepted)
 	}
 
-	//Eventually, our Alertmanagers should receiver the alert.
+	// Eventually, our Alertmanagers should receiver the alert.
 	{
 		require.Eventually(t, func() bool {
 			return fakeAM1.AlertsCount() == 1 && fakeAM2.AlertsCount() == 1
@@ -282,11 +285,11 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	// Add an alertmanager datasource fot the other organisation
 	{
 		cmd := datasources.AddDataSourceCommand{
-			OrgId:  2,
+			OrgID:  2,
 			Name:   "AM3",
 			Type:   datasources.DS_ALERTMANAGER,
 			Access: "proxy",
-			Url:    fakeAM3.URL(),
+			URL:    fakeAM3.URL(),
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"handleGrafanaManagedAlerts": true,
 				"implementation":             "prometheus",
