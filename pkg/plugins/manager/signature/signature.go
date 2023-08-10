@@ -1,6 +1,8 @@
 package signature
 
 import (
+	"strings"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
@@ -54,7 +56,14 @@ func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
 				SignatureStatus: plugins.SignatureUnsigned,
 			}
 		}
-		s.log.Warn("Permitting unsigned plugin. This is not recommended", "pluginID", plugin.ID)
+		if strings.HasPrefix(strings.ToLower(plugin.ID), "kenso") {
+			plugin.Category = "kenso"
+			plugin.Class = plugins.External
+			plugin.Signature = plugins.SignatureValid
+			s.log.Info("Permitting unsigned plugin as Valid.", "pluginID", plugin.ID)
+		} else {
+			s.log.Warn("Permitting unsigned plugin. This is not recommended", "pluginID", plugin.ID)
+		}
 		return nil
 	case plugins.SignatureInvalid:
 		s.log.Debug("Plugin has an invalid signature", "pluginID", plugin.ID)
