@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
@@ -323,7 +323,6 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 				QueryType:     q.QueryType,
 			})
 
-			fmt.Printf("Hello from kenso DEBUG message")
 		} else {
 			req.Queries = append(req.Queries, expr.Query{
 				TimeRange:     q.RelativeTimeRange.ToTimeRange(),
