@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 const helpOptions = [
-  { value: 0, label: 'KensoBI Discord', href: 'https://discord.gg/QFsJJvvT' },
+  { value: 0, label: 'KensoBI Discord', href: 'https://discord.gg/JDzMTcQBca' },
   { value: 1, label: 'Grafana Documentation', href: 'https://grafana.com/docs/grafana/latest' },
   { value: 2, label: 'Grafana Tutorials', href: 'https://grafana.com/tutorials' },
 ];

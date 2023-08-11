@@ -16,10 +16,11 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
-	"github.com/grafana/grafana/pkg/build/fsutil"
-	"github.com/grafana/grafana/pkg/build/gcloud"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
+
+	"github.com/grafana/grafana/pkg/build/fsutil"
+	"github.com/grafana/grafana/pkg/build/gcloud"
 )
 
 var (
@@ -47,14 +48,25 @@ type File struct {
 
 // New creates a new Client by checking for the Google Cloud SDK auth key and/or environment variable.
 func New() (*Client, error) {
-	client, err := newClient()
+	storageClient, err := newClient()
 	if err != nil {
 		return nil, err
 	}
 
-	return &Client{
-		Client: *client,
-	}, nil
+	client := &Client{
+		Client: *storageClient,
+	}
+	client.SetRetryer()
+
+	return client, nil
+}
+
+// SetRetryer adds a retry strategy for the googleapi client calls that fail.
+func (client *Client) SetRetryer() {
+	client.SetRetry([]storage.RetryOption{
+		storage.WithPolicy(storage.RetryAlways),
+		storage.WithErrorFunc(storage.ShouldRetry),
+	}...)
 }
 
 // newClient initializes the google-cloud-storage (GCS) client.
@@ -147,8 +159,6 @@ func (client *Client) Copy(ctx context.Context, file File, bucket *storage.Bucke
 		return fmt.Errorf("failed to copy to Cloud Storage: %w", err)
 	}
 
-	log.Printf("Successfully uploaded tarball to Google Cloud Storage, path: %s/%s\n", remote, file.FullPath)
-
 	return nil
 }
 
@@ -206,7 +216,6 @@ func (client *Client) RemoteCopy(ctx context.Context, file File, fromBucket, toB
 		return fmt.Errorf("failed to copy object %s, to %s, err: %w", file.FullPath, dstObject, err)
 	}
 
-	log.Printf("%s was successfully copied to %v bucket!.\n\n", file.FullPath, toBucket)
 	return nil
 }
 
@@ -258,7 +267,6 @@ func (client *Client) Delete(ctx context.Context, bucket *storage.BucketHandle, 
 	if err := object.Delete(ctx); err != nil {
 		return fmt.Errorf("cannot delete %s, err: %w", path, err)
 	}
-	log.Printf("Successfully deleted tarball to Google Cloud Storage, path: %s", path)
 	return nil
 }
 
@@ -352,7 +360,7 @@ func (client *Client) DownloadDirectory(ctx context.Context, bucket *storage.Buc
 	}
 
 	for _, file := range files {
-		err = client.downloadFile(ctx, bucket, file.FullPath, filepath.Join(destPath, file.PathTrimmed))
+		err = client.downloadFile(ctx, bucket, file.FullPath, file.PathTrimmed)
 		if err != nil {
 			return err
 		}

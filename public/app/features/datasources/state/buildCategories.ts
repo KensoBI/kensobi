@@ -1,5 +1,5 @@
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';
-import { config, featureEnabled } from '@grafana/runtime';
+import { featureEnabled } from '@grafana/runtime';
 import { DataSourcePluginCategory } from 'app/types';
 
 export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePluginCategory[] {
@@ -245,8 +245,9 @@ function getPhantomPlugin(options: GetPhantomPluginOptions): DataSourcePluginMet
       author: { name: 'Grafana Labs' },
       links: [
         {
-          url: config.pluginCatalogURL + options.id,
+          url: '/plugins/' + options.id,
           name: 'Install now',
+          target: '_self',
         },
       ],
       screenshots: [],

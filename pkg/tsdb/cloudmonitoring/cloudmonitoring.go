@@ -56,7 +56,8 @@ const (
 	gceAuthentication         = "gce"
 	jwtAuthentication         = "jwt"
 	annotationQueryType       = "annotation"
-	metricQueryType           = "metrics"
+	timeSeriesListQueryType   = "timeSeriesList"
+	timeSeriesQueryQueryType  = "timeSeriesQuery"
 	sloQueryType              = "slo"
 	crossSeriesReducerDefault = "REDUCE_NONE"
 	perSeriesAlignerDefault   = "ALIGN_MEAN"
@@ -130,7 +131,7 @@ type Service struct {
 	resourceHandler backend.CallResourceHandler
 
 	// mocked in tests
-	gceDefaultProjectGetter func(ctx context.Context) (string, error)
+	gceDefaultProjectGetter func(ctx context.Context, scope string) (string, error)
 }
 
 type datasourceInfo struct {
@@ -142,8 +143,7 @@ type datasourceInfo struct {
 	clientEmail        string
 	tokenUri           string
 	services           map[string]datasourceService
-
-	decryptedSecureJSONData map[string]string
+	privateKey         string
 }
 
 type datasourceJSONData struct {
@@ -171,15 +171,19 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		dsInfo := &datasourceInfo{
-			id:                      settings.ID,
-			updated:                 settings.Updated,
-			url:                     settings.URL,
-			authenticationType:      jsonData.AuthenticationType,
-			defaultProject:          jsonData.DefaultProject,
-			clientEmail:             jsonData.ClientEmail,
-			tokenUri:                jsonData.TokenURI,
-			decryptedSecureJSONData: settings.DecryptedSecureJSONData,
-			services:                map[string]datasourceService{},
+			id:                 settings.ID,
+			updated:            settings.Updated,
+			url:                settings.URL,
+			authenticationType: jsonData.AuthenticationType,
+			defaultProject:     jsonData.DefaultProject,
+			clientEmail:        jsonData.ClientEmail,
+			tokenUri:           jsonData.TokenURI,
+			services:           map[string]datasourceService{},
+		}
+
+		dsInfo.privateKey, err = utils.GetPrivateKey(&settings)
+		if err != nil {
+			return nil, err
 		}
 
 		opts, err := settings.HTTPClientOptions()
@@ -216,32 +220,6 @@ func migrateMetricTypeFilter(metricTypeFilter string, prevFilters interface{}) [
 	return metricTypeFilterArray
 }
 
-func migratePreprocessor(tsl *timeSeriesList, preprocessor string) {
-	// In case a preprocessor is defined, the preprocessor becomes the primary aggregation
-	// and the aggregation that is specified in the UI becomes the secondary aggregation
-	// Rules are specified in this issue: https://github.com/grafana/grafana/issues/30866
-	t := toPreprocessorType(preprocessor)
-	if t != PreprocessorTypeNone {
-		// Move aggregation to secondaryAggregation
-		tsl.SecondaryAlignmentPeriod = tsl.AlignmentPeriod
-		tsl.SecondaryCrossSeriesReducer = tsl.CrossSeriesReducer
-		tsl.SecondaryPerSeriesAligner = tsl.PerSeriesAligner
-		tsl.SecondaryGroupBys = tsl.GroupBys
-
-		// Set a default cross series reducer if grouped
-		if len(tsl.GroupBys) == 0 {
-			tsl.CrossSeriesReducer = crossSeriesReducerDefault
-		}
-
-		// Set aligner based on preprocessor type
-		aligner := "ALIGN_RATE"
-		if t == PreprocessorTypeDelta {
-			aligner = "ALIGN_DELTA"
-		}
-		tsl.PerSeriesAligner = aligner
-	}
-}
-
 func migrateRequest(req *backend.QueryDataRequest) error {
 	for i, q := range req.Queries {
 		var rawQuery map[string]interface{}
@@ -250,14 +228,17 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			return err
 		}
 
-		if rawQuery["metricQuery"] == nil {
+		if rawQuery["metricQuery"] == nil &&
+			rawQuery["timeSeriesQuery"] == nil &&
+			rawQuery["timeSeriesList"] == nil &&
+			rawQuery["sloQuery"] == nil {
 			// migrate legacy query
 			var mq timeSeriesList
 			err = json.Unmarshal(q.JSON, &mq)
 			if err != nil {
 				return err
 			}
-			q.QueryType = metricQueryType
+			q.QueryType = timeSeriesListQueryType
 			gq := grafanaQuery{
 				TimeSeriesList: &mq,
 			}
@@ -267,9 +248,6 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			if rawQuery["metricType"] != nil {
 				// metricType should be a filter
 				gq.TimeSeriesList.Filters = migrateMetricTypeFilter(rawQuery["metricType"].(string), rawQuery["filters"])
-			}
-			if rawQuery["preprocessor"] != nil {
-				migratePreprocessor(gq.TimeSeriesList, rawQuery["preprocessor"].(string))
 			}
 
 			b, err := json.Marshal(gq)
@@ -288,7 +266,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 		}
 
 		// Metric query was divided between timeSeriesList and timeSeriesQuery API calls
-		if rawQuery["metricQuery"] != nil {
+		if rawQuery["metricQuery"] != nil && q.QueryType == "metrics" {
 			metricQuery := rawQuery["metricQuery"].(map[string]interface{})
 
 			if metricQuery["editorMode"] != nil && toString(metricQuery["editorMode"]) == "mql" {
@@ -297,6 +275,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 					Query:       toString(metricQuery["query"]),
 					GraphPeriod: toString(metricQuery["graphPeriod"]),
 				}
+				q.QueryType = timeSeriesQueryQueryType
 			} else {
 				tslb, err := json.Marshal(metricQuery)
 				if err != nil {
@@ -311,11 +290,10 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 					// metricType should be a filter
 					tsl.Filters = migrateMetricTypeFilter(metricQuery["metricType"].(string), metricQuery["filters"])
 				}
-				if rawQuery["preprocessor"] != nil {
-					migratePreprocessor(tsl, rawQuery["preprocessor"].(string))
-				}
 				rawQuery["timeSeriesList"] = tsl
+				q.QueryType = timeSeriesListQueryType
 			}
+			// AliasBy is now a top level property
 			if metricQuery["aliasBy"] != nil {
 				rawQuery["aliasBy"] = metricQuery["aliasBy"]
 			}
@@ -323,10 +301,20 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			if err != nil {
 				return err
 			}
-			if q.QueryType == "" {
-				q.QueryType = metricQueryType
-			}
 			q.JSON = b
+		}
+
+		if rawQuery["sloQuery"] != nil && q.QueryType == sloQueryType {
+			sloQuery := rawQuery["sloQuery"].(map[string]interface{})
+			// AliasBy is now a top level property
+			if sloQuery["aliasBy"] != nil {
+				rawQuery["aliasBy"] = sloQuery["aliasBy"]
+				b, err := json.Marshal(rawQuery)
+				if err != nil {
+					return err
+				}
+				q.JSON = b
+			}
 		}
 
 		req.Queries[i] = q
@@ -395,7 +383,7 @@ func queryModel(query backend.DataQuery) (grafanaQuery, error) {
 }
 
 func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataRequest) ([]cloudMonitoringQueryExecutor, error) {
-	var cloudMonitoringQueryExecutors []cloudMonitoringQueryExecutor
+	cloudMonitoringQueryExecutors := make([]cloudMonitoringQueryExecutor, 0, len(req.Queries))
 	startTime := req.Queries[0].TimeRange.From
 	endTime := req.Queries[0].TimeRange.To
 	durationSeconds := int(endTime.Sub(startTime).Seconds())
@@ -408,29 +396,26 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 
 		var queryInterface cloudMonitoringQueryExecutor
 		switch query.QueryType {
-		case metricQueryType, annotationQueryType:
-			if q.TimeSeriesQuery != nil {
-				queryInterface = &cloudMonitoringTimeSeriesQuery{
-					refID:      query.RefID,
-					aliasBy:    q.AliasBy,
-					parameters: q.TimeSeriesQuery,
-					IntervalMS: query.Interval.Milliseconds(),
-					timeRange:  req.Queries[0].TimeRange,
-				}
-			} else if q.TimeSeriesList != nil {
-				cmtsf := &cloudMonitoringTimeSeriesList{
-					refID:   query.RefID,
-					logger:  logger,
-					aliasBy: q.AliasBy,
-				}
-				if q.TimeSeriesList.View == "" {
-					q.TimeSeriesList.View = "FULL"
-				}
-				cmtsf.parameters = q.TimeSeriesList
-				cmtsf.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
-				queryInterface = cmtsf
-			} else {
-				return nil, fmt.Errorf("missing query info")
+		case timeSeriesListQueryType, annotationQueryType:
+			cmtsf := &cloudMonitoringTimeSeriesList{
+				refID:   query.RefID,
+				logger:  logger,
+				aliasBy: q.AliasBy,
+			}
+			if q.TimeSeriesList.View == "" {
+				q.TimeSeriesList.View = "FULL"
+			}
+			cmtsf.parameters = q.TimeSeriesList
+			cmtsf.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
+			queryInterface = cmtsf
+		case timeSeriesQueryQueryType:
+			queryInterface = &cloudMonitoringTimeSeriesQuery{
+				refID:      query.RefID,
+				aliasBy:    q.AliasBy,
+				parameters: q.TimeSeriesQuery,
+				IntervalMS: query.Interval.Milliseconds(),
+				timeRange:  req.Queries[0].TimeRange,
+				logger:     logger,
 			}
 		case sloQueryType:
 			cmslo := &cloudMonitoringSLO{
@@ -499,7 +484,11 @@ func calculateAlignmentPeriod(alignmentPeriod string, intervalMs int64, duration
 func formatLegendKeys(metricType string, defaultMetricName string, labels map[string]string,
 	additionalLabels map[string]string, query cloudMonitoringQueryExecutor) string {
 	if query.getAliasBy() == "" {
-		return defaultMetricName
+		if defaultMetricName != "" {
+			return defaultMetricName
+		}
+
+		return metricType
 	}
 
 	result := legendKeyFormat.ReplaceAllFunc([]byte(query.getAliasBy()), func(in []byte) []byte {
@@ -562,7 +551,7 @@ func calcBucketBound(bucketOptions cloudMonitoringBucketOptions, n int) string {
 
 	switch {
 	case bucketOptions.LinearBuckets != nil:
-		bucketBound = strconv.FormatInt(bucketOptions.LinearBuckets.Offset+(bucketOptions.LinearBuckets.Width*int64(n-1)), 10)
+		bucketBound = strconv.FormatFloat(bucketOptions.LinearBuckets.Offset+(bucketOptions.LinearBuckets.Width*float64(n-1)), 'f', 2, 64)
 	case bucketOptions.ExponentialBuckets != nil:
 		bucketBound = strconv.FormatInt(int64(bucketOptions.ExponentialBuckets.Scale*math.Pow(bucketOptions.ExponentialBuckets.GrowthFactor, float64(n-1))), 10)
 	case bucketOptions.ExplicitBuckets != nil:
@@ -585,7 +574,7 @@ func (s *Service) ensureProject(ctx context.Context, dsInfo datasourceInfo, proj
 
 func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) (string, error) {
 	if dsInfo.authenticationType == gceAuthentication {
-		return s.gceDefaultProjectGetter(ctx)
+		return s.gceDefaultProjectGetter(ctx, cloudMonitorScope)
 	}
 	return dsInfo.defaultProject, nil
 }
@@ -656,7 +645,7 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, e
 
 	instance, ok := i.(*datasourceInfo)
 	if !ok {
-		return nil, fmt.Errorf("failed to cast datsource info")
+		return nil, fmt.Errorf("failed to cast datasource info")
 	}
 
 	return instance, nil

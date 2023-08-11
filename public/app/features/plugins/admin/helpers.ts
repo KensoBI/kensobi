@@ -197,6 +197,7 @@ export enum Sorters {
   updated = 'updated',
   published = 'published',
   downloads = 'downloads',
+  kenso = 'kenso',
 }
 
 export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
@@ -208,6 +209,18 @@ export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
     published: (a: CatalogPlugin, b: CatalogPlugin) =>
       dateTimeParse(b.publishedAt).valueOf() - dateTimeParse(a.publishedAt).valueOf(),
     downloads: (a: CatalogPlugin, b: CatalogPlugin) => b.downloads - a.downloads,
+    kenso: (a: CatalogPlugin, b: CatalogPlugin) => {
+      //ids start with kenso are always first
+      const aIsKenso = a.id.startsWith('kenso');
+      const bIsKenso = b.id.startsWith('kenso');
+      if (aIsKenso && !bIsKenso) {
+        return -1;
+      }
+      if (!aIsKenso && bIsKenso) {
+        return 1;
+      }
+      return a.name.localeCompare(b.name);
+    },
   };
 
   if (sorters[sortBy]) {
