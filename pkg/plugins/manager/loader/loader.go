@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/storage"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -37,6 +38,7 @@ type Loader struct {
 	assetPath          *assetpath.Service
 	log                log.Logger
 	cfg                *config.Cfg
+	license            plugins.Licensing
 
 	errs map[string]*plugins.SignatureError
 }
@@ -66,6 +68,7 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 		cfg:                cfg,
 		pluginsCDN:         pluginsCDNService,
 		assetPath:          assetPath,
+		license:            license,
 	}
 }
 
@@ -133,6 +136,8 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 		}
 	}
 
+	hasKensoLicense := l.license.Edition() == licensing.KensoBIEdition
+
 	// validate signatures
 	verifiedPlugins := make([]*plugins.Plugin, 0)
 	for _, plugin := range loadedPlugins {
@@ -143,6 +148,11 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 			plugin.SignatureError = signingError
 			l.errs[plugin.ID] = signingError
 			// skip plugin so it will not be loaded any further
+			continue
+		}
+
+		if plugin.Category == "kenso" && !hasKensoLicense {
+			l.log.Warn("Skipping loading Kenso plugin due to missing license", "pluginID", plugin.ID)
 			continue
 		}
 

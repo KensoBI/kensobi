@@ -9,7 +9,15 @@
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
       "env": {},
       "cwd": "${workspaceFolder}",
-      "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
+      "args": [
+        "server",
+        "--homepath",
+        "${workspaceFolder}",
+        "--packaging",
+        "dev",
+        "cfg:app_mode=development",
+        "cfg:paths.plugins=E:/Data/Source/kenso/plugins"
+      ]
     },
     {
       "name": "Attach to Chrome",
