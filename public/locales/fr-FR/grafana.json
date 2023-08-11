@@ -342,8 +342,8 @@
       "subtitle": "Groupes d'utilisateurs ayant des besoins communs en matière de tableau de bord et d'autorisations",
       "title": "Équipes"
     },
-    "upgrading": {
-      "title": "Statistiques et licence"
+    "stats": {
+      "title": "Statistiques"
     },
     "users": {
       "subtitle": "Inviter des utilisateurs et leur attribuer des rôles",

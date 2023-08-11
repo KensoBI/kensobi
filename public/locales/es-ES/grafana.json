@@ -342,8 +342,8 @@
       "subtitle": "Grupos de usuarios que tienen necesidades comunes de permisos y de panel de control",
       "title": "Equipos"
     },
-    "upgrading": {
-      "title": "Estadísticas y licencia"
+    "stats": {
+      "title": "Estadísticas"
     },
     "users": {
       "subtitle": "Invite y asigne roles a los usuarios",

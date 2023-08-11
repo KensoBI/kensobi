@@ -408,10 +408,10 @@ export const navIndex: NavIndex = {
             url: '/admin/settings',
           },
           {
-            id: 'upgrading',
+            id: 'stats',
             text: 'Stats and license',
             icon: 'unlock',
-            url: '/admin/upgrading',
+            url: '/admin/stats',
           },
         ],
       },
@@ -504,10 +504,10 @@ export const navIndex: NavIndex = {
         url: '/admin/settings',
       },
       {
-        id: 'upgrading',
+        id: 'stats',
         text: 'Stats and license',
         icon: 'unlock',
-        url: '/admin/upgrading',
+        url: '/admin/stats',
       },
     ],
   },
@@ -532,11 +532,11 @@ export const navIndex: NavIndex = {
     icon: 'sliders-v-alt',
     url: '/admin/settings',
   },
-  upgrading: {
-    id: 'upgrading',
-    text: 'Stats and license',
+  stats: {
+    id: 'stats',
+    text: 'Stats',
     icon: 'unlock',
-    url: '/admin/upgrading',
+    url: '/admin/stats',
   },
   monitoring: {
     id: 'monitoring',

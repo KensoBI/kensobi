@@ -342,8 +342,8 @@
       "subtitle": "Gruppen von Benutzern mit gemeinsamen Dashboards und Benachrichtigungen",
       "title": "Teams"
     },
-    "upgrading": {
-      "title": "Statistiken und Lizenz"
+    "stats": {
+      "title": "Statistiken"
     },
     "users": {
       "subtitle": "Laden Benutzer ein und weise ihnen Rollen zu",

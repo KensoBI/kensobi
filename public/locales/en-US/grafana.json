@@ -342,8 +342,8 @@
       "subtitle": "Groups of users that have common dashboard and permission needs",
       "title": "Teams"
     },
-    "upgrading": {
-      "title": "Stats and license"
+    "stats": {
+      "title": "Stats"
     },
     "users": {
       "subtitle": "Invite and assign roles to users",

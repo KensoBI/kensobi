@@ -48,7 +48,7 @@ var wireExtsBasicSet = wire.NewSet(
 	anonimpl.ProvideAnonymousSessionService,
 	wire.Bind(new(anonymous.Service), new(*anonimpl.AnonSessionService)),
 	licensing.ProvideService,
-	wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
+	wire.Bind(new(licensing.Licensing), new(*licensing.KensoBILicensingService)),
 	setting.ProvideProvider,
 	wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	acimpl.ProvideService,

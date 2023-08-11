@@ -342,8 +342,8 @@
       "subtitle": "具有共同仪表板和权限需求的用户组",
       "title": "团队"
     },
-    "upgrading": {
-      "title": "统计信息和许可证"
+    "stats": {
+      "title": "统计数据"
     },
     "users": {
       "subtitle": "邀请用户并向其分配角色",

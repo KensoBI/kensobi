@@ -330,7 +330,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/admin/upgrading',
+      path: '/admin/stats',
       component: SafeDynamicImport(() => import('app/features/admin/UpgradePage')),
     },
     {
