@@ -16,7 +16,8 @@
         "--packaging",
         "dev",
         "cfg:app_mode=development",
-        "cfg:paths.plugins=E:/Data/Source/kenso/plugins"
+        "cfg:paths.plugins=E:/Data/Source/kenso/plugins",
+        "cfg:enterprise.license_path=E:/Data/Source/kenso/kensobi_grafana/license.lic"
       ]
     },
     {
