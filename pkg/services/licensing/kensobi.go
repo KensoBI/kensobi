@@ -34,8 +34,10 @@ rabOjpOMw2Ajx2ojcgt2kW4++JfxC/oADQIDAQAB
 )
 
 type licenseContent struct {
-	UserName string `json:"user_name"`
 	Expiry   string `json:"expiry"`
+	IssuedAt string `json:"issued_at"`
+	Issuer   string `json:"issuer"`
+	Subject  string `json:"subject"`
 }
 
 type KensoBILicensingService struct {
