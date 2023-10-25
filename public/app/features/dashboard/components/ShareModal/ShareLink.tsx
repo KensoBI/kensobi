@@ -7,6 +7,8 @@ import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
 
 import { ThemePicker } from './ThemePicker';
+import { QrCode, Ecc } from './qrcode';
+import { drawQrCode } from './qrcodeDraw';
 import { ShareModalTabProps } from './types';
 import { buildImageUrl, buildShareUrl } from './utils';
 
@@ -45,6 +47,14 @@ export class ShareLink extends PureComponent<Props, State> {
       prevState.useShortUrl !== useShortUrl
     ) {
       this.buildUrl();
+    }
+
+    if (prevState.shareUrl !== this.state.shareUrl) {
+      const qrCode = QrCode.encodeText(this.state.shareUrl, Ecc.MEDIUM);
+      const element = document.getElementById('share-link-qr-code');
+      if (element && element instanceof HTMLCanvasElement) {
+        drawQrCode(qrCode, 7.0, 1.0, '#000000', '#ffffff', element);
+      }
     }
   }
 
@@ -124,6 +134,9 @@ export class ShareLink extends PureComponent<Props, State> {
               }
             />
           </Field>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <canvas id="share-link-qr-code" />
+          </div>
         </FieldSet>
 
         {panel && config.rendererAvailable && (
