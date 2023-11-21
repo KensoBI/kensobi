@@ -82,7 +82,7 @@ export class QrCode {
     segs: Readonly<QrSegment[]>,
     ecl: Ecc,
     minVersion: int = 1,
-    maxVersion: int = 40,
+    maxVersion: int = 10,
     mask: int = -1,
     boostEcl = true
   ): QrCode {

@@ -53,7 +53,7 @@ export class ShareLink extends PureComponent<Props, State> {
       const qrCode = QrCode.encodeText(this.state.shareUrl, Ecc.MEDIUM);
       const element = document.getElementById('share-link-qr-code');
       if (element && element instanceof HTMLCanvasElement) {
-        drawQrCode(qrCode, 7.0, 1.0, '#000000', '#ffffff', element);
+        drawQrCode(qrCode, 7.0, 1.0, '#ffffff', '#000000', element);
       }
     }
   }
@@ -134,7 +134,7 @@ export class ShareLink extends PureComponent<Props, State> {
               }
             />
           </Field>
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', height: '450px' }}>
             <canvas id="share-link-qr-code" />
           </div>
         </FieldSet>

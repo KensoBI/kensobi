@@ -1,0 +1,1 @@
+robocopy "public" "..\public" /s
