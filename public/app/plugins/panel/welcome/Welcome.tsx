@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, Card, Icon } from '@grafana/ui';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 
 const helpOptions = [
   { value: 0, label: 'KensoBI Discord', href: 'https://discord.gg/JDzMTcQBca' },
@@ -15,44 +16,102 @@ export const WelcomeBanner: FC = () => {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Welcome to KensoBI</h1>
-      <div className={styles.help}>
-        <h3 className={styles.helpText}>Need help?</h3>
-        <div className={styles.helpLinks}>
-          {helpOptions.map((option, index) => {
-            return (
-              <a
-                key={`${option.label}-${index}`}
-                className={styles.helpLink}
-                href={`${option.href}?utm_source=app_gettingstarted`}
-              >
-                {option.label}
-              </a>
-            );
-          })}
+      <div className={styles.innerContainer}>
+        <h1 className={styles.title}>Welcome to KensoBI</h1>
+        <div className={styles.help}>
+          <h3 className={styles.helpText}>Need help?</h3>
+          <div className={styles.helpLinks}>
+            {helpOptions.map((option, index) => {
+              return (
+                <a
+                  key={`${option.label}-${index}`}
+                  className={styles.helpLink}
+                  href={`${option.href}?utm_source=app_gettingstarted`}
+                >
+                  {option.label}
+                </a>
+              );
+            })}
+          </div>
         </div>
       </div>
+      <CheckLicense />
     </div>
   );
 };
 
+function CheckLicense() {
+  const styles = useStyles2(getStyles);
+  const [noLicense, setNoLicense] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    const fetchLicense = async () => {
+      try {
+        const response = await getBackendSrv().post(`/api/plugins/kensobi-admin-app/resources/checkLicense`);
+        if (typeof response !== 'object' || response?.token == null) {
+          setNoLicense(true);
+        }
+      } catch {
+        setNoLicense(true);
+      }
+    };
+    fetchLicense();
+  }, []);
+
+  if (noLicense !== true) {
+    return null;
+  }
+
+  return (
+    <Card>
+      <Card.Heading>Verification</Card.Heading>
+      <Card.Meta>
+        <div>
+          Your organization is currently unverified. To unlock the benefits of the KensoBI Cloud Free Tier, please take
+          a moment to verify your organization. No credit card is required for this process.
+          <br />
+          <div>
+            <b>Verification Benefits:</b>
+            <br />
+            <ul className={styles.benefitsList}>
+              <li>Access to all KensoBI plugins</li>
+              <li>1 GB database to store your measurement data</li>
+              <li>Access to Measurement Streaming Service</li>
+            </ul>
+          </div>
+        </div>
+      </Card.Meta>
+      <Card.Actions>
+        <a href={`http://kensobi.com/verify-org`} className={styles.verifyUri} target="_blank" rel="noreferrer">
+          Verify <Icon name="external-link-alt" />
+        </a>
+      </Card.Actions>
+    </Card>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
+    innerContainer: css`
+      min-height: 80px;
       display: flex;
-      /// background: url(public/img/g8_home_v2.svg) no-repeat;
+      align-items: center;
+      justify-content: space-between;
+
+      ${theme.breakpoints.down('lg')} {
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+      }
+    `,
+    container: css`
       background-size: cover;
       height: 100%;
-      align-items: center;
       padding: 0 16px;
-      justify-content: space-between;
       padding: 0 ${theme.spacing(3)};
 
       ${theme.breakpoints.down('lg')} {
         background-position: 0px;
-        flex-direction: column;
-        align-items: flex-start;
-        justify-content: center;
       }
 
       ${theme.breakpoints.down('sm')} {
@@ -101,6 +160,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       ${theme.breakpoints.down('sm')} {
         margin-right: 8px;
       }
+    `,
+    verifyUri: css`
+      padding: 8px 16px;
+    `,
+    benefitsList: css`
+      padding-inline-start: 40px;
     `,
   };
 };
