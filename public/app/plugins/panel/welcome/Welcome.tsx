@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Card, Icon } from '@grafana/ui';
+import { useStyles2, Alert, VerticalGroup, Icon } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 
 const helpOptions = [
@@ -47,7 +47,13 @@ function CheckLicense() {
   React.useEffect(() => {
     const fetchLicense = async () => {
       try {
-        const response = await getBackendSrv().post(`/api/plugins/kensobi-admin-app/resources/checkLicense`);
+        const response = await getBackendSrv().post(
+          `/api/plugins/kensobi-admin-app/resources/checkLicense`,
+          undefined,
+          {
+            showErrorAlert: false,
+          }
+        );
         if (typeof response !== 'object' || response?.token == null) {
           setNoLicense(true);
         }
@@ -63,13 +69,13 @@ function CheckLicense() {
   }
 
   return (
-    <Card>
-      <Card.Heading>Verification</Card.Heading>
-      <Card.Meta>
-        <div>
-          Your organization is currently unverified. To unlock the benefits of the KensoBI Cloud Free Tier, please take
-          a moment to verify your organization. No credit card is required for this process.
-          <br />
+    <Alert
+      title="Your organization is currently unverified. To unlock the benefits of the KensoBI Cloud Free Tier, please take
+    a moment to verify your organization. No credit card is required for this process."
+      severity="info"
+    >
+      <VerticalGroup>
+        <div className={styles.alertContent}>
           <div>
             <b>Verification Benefits:</b>
             <br />
@@ -79,14 +85,12 @@ function CheckLicense() {
               <li>Access to Measurement Streaming Service</li>
             </ul>
           </div>
+          <a href={`http://kensobi.com/verify-org`} className={styles.verifyUri} target="_blank" rel="noreferrer">
+            Verify <Icon name="external-link-alt" />
+          </a>
         </div>
-      </Card.Meta>
-      <Card.Actions>
-        <a href={`http://kensobi.com/verify-org`} className={styles.verifyUri} target="_blank" rel="noreferrer">
-          Verify <Icon name="external-link-alt" />
-        </a>
-      </Card.Actions>
-    </Card>
+      </VerticalGroup>
+    </Alert>
   );
 }
 
@@ -163,9 +167,19 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     verifyUri: css`
       padding: 8px 16px;
+      display: block;
+      font-size: ${theme.typography.h5.fontSize};
+      color: ${theme.colors.primary.text};
+
+      &:hover {
+        color: ${theme.colors.primary.shade};
+      }
     `,
     benefitsList: css`
       padding-inline-start: 40px;
+    `,
+    alertContent: css`
+      color: ${theme.colors.text.primary};
     `,
   };
 };
