@@ -21,7 +21,7 @@ import { getDefaultFormValues } from '../../utils/rule-form';
 
 import 'whatwg-fetch';
 
-import AnnotationsField from './AnnotationsField';
+import AnnotationsStep from './AnnotationsStep';
 
 // To get anything displayed inside the Autosize component we need to mock it
 // Ref https://github.com/bvaughn/react-window/issues/454#issuecomment-646031139
@@ -33,7 +33,7 @@ jest.mock(
 );
 
 const ui = {
-  setDashboardButton: byRole('button', { name: 'Set dashboard and panel' }),
+  setDashboardButton: byRole('button', { name: 'Link dashboard and panel' }),
   annotationKeys: byTestId('annotation-key-', { exact: false }),
   annotationValues: byTestId('annotation-value-', { exact: false }),
   dashboardPicker: {
@@ -65,7 +65,7 @@ function FormWrapper({ formValues }: { formValues?: Partial<RuleFormValues> }) {
   return (
     <TestProvider store={store}>
       <FormProvider {...formApi}>
-        <AnnotationsField />
+        <AnnotationsStep />
       </FormProvider>
     </TestProvider>
   );
@@ -154,18 +154,12 @@ describe('AnnotationsField', function () {
 
       await user.click(ui.dashboardPicker.confirmButton.get());
 
-      const annotationKeyElements = ui.annotationKeys.getAll();
       const annotationValueElements = ui.annotationValues.getAll();
 
       expect(ui.dashboardPicker.dialog.query()).not.toBeInTheDocument();
 
-      expect(annotationKeyElements).toHaveLength(2);
       expect(annotationValueElements).toHaveLength(2);
-
-      expect(annotationKeyElements[0]).toHaveTextContent('Dashboard UID');
       expect(annotationValueElements[0]).toHaveTextContent('dash-test-uid');
-
-      expect(annotationKeyElements[1]).toHaveTextContent('Panel ID');
       expect(annotationValueElements[1]).toHaveTextContent('2');
     });
 

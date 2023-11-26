@@ -17,6 +17,11 @@ rgm_destination = "destination"
 rgm_github_token = "github_token"
 rgm_dagger_token = "dagger_token"
 
+docker_username = "docker_username"
+docker_password = "docker_password"
+
+npm_token = "npm_token"
+
 def from_secret(secret):
     return {"from_secret": secret}
 
@@ -34,11 +39,13 @@ def secrets():
     return [
         vault_secret(gcp_grafanauploads, "infra/data/ci/grafana-release-eng/grafanauploads", "credentials.json"),
         vault_secret(gcp_grafanauploads_base64, "infra/data/ci/grafana-release-eng/grafanauploads", "credentials_base64"),
-        vault_secret("grafana_api_key", "infra/data/ci/drone-plugins", "grafana_api_key"),
+        vault_secret("grafana_api_key", "infra/data/ci/grafana-release-eng/grafanacom", "api_key"),
         vault_secret(pull_secret, "secret/data/common/gcr", ".dockerconfigjson"),
         vault_secret("github_token", "infra/data/ci/github/grafanabot", "pat"),
         vault_secret(drone_token, "infra/data/ci/drone", "machine-user-token"),
         vault_secret(prerelease_bucket, "infra/data/ci/grafana/prerelease", "bucket"),
+        vault_secret(docker_username, "infra/data/ci/grafanaci-docker-hub", "username"),
+        vault_secret(docker_password, "infra/data/ci/grafanaci-docker-hub", "password"),
         vault_secret(
             gcp_upload_artifacts_key,
             "infra/data/ci/grafana/releng/artifacts-uploader-service-account",
@@ -63,6 +70,11 @@ def secrets():
             azure_tenant,
             "infra/data/ci/datasources/cpp-azure-resourcemanager-credentials",
             "tenant_id",
+        ),
+        vault_secret(
+            npm_token,
+            "infra/data/ci/grafana-release-eng/npm",
+            "token",
         ),
         # Package publishing
         vault_secret(
@@ -101,34 +113,19 @@ def secrets():
             "static_asset_editions",
         ),
         vault_secret(
-            "enterprise2-cdn-path",
-            "infra/data/ci/grafana-release-eng/enterprise2",
-            "cdn_path",
-        ),
-        vault_secret(
-            "enterprise2_security_prefix",
-            "infra/data/ci/grafana-release-eng/enterprise2",
-            "security_prefix",
-        ),
-        vault_secret(
             rgm_gcp_key_base64,
             "infra/data/ci/grafana-release-eng/rgm",
-            "gcp_service_account_base64",
+            "gcp_service_account_prod_base64",
         ),
         vault_secret(
             rgm_destination,
             "infra/data/ci/grafana-release-eng/rgm",
-            "destination",
+            "destination_prod",
         ),
         vault_secret(
             rgm_dagger_token,
             "infra/data/ci/grafana-release-eng/rgm",
             "dagger_token",
-        ),
-        vault_secret(
-            rgm_github_token,
-            "infra/data/ci/github/grafanabot",
-            "pat",
         ),
         # grafana-delivery-bot secrets
         vault_secret(
@@ -147,18 +144,8 @@ def secrets():
             "app-private-key",
         ),
         vault_secret(
-            rgm_gcp_key_base64,
-            "infra/data/ci/grafana-release-eng/rgm",
-            "gcp_service_account_base64",
-        ),
-        vault_secret(
-            rgm_destination,
-            "infra/data/ci/grafana-release-eng/rgm",
-            "destination",
-        ),
-        vault_secret(
-            rgm_github_token,
-            "infra/data/ci/github/grafanabot",
-            "pat",
+            "gcr_credentials",
+            "secret/data/common/gcr",
+            "service-account",
         ),
     ]

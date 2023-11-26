@@ -205,11 +205,31 @@ describe('InfluxDataSource', () => {
   // Some functions are required by the parent datasource class to provide functionality
   // such as ad-hoc filters, which requires the definition of the getTagKeys, and getTagValues
   describe('Datasource contract', () => {
+    const metricFindQueryMock = jest.fn();
+    beforeEach(() => {
+      ctx.ds.metricFindQuery = metricFindQueryMock;
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
     it('has function called getTagKeys', () => {
       expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ctx.ds))).toContain('getTagKeys');
     });
+
     it('has function called getTagValues', () => {
       expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ctx.ds))).toContain('getTagValues');
+    });
+
+    it('should be able to call getTagKeys without specifying any parameter', () => {
+      ctx.ds.getTagKeys();
+      expect(metricFindQueryMock).toHaveBeenCalled();
+    });
+
+    it('should be able to call getTagValues without specifying anything but key', () => {
+      ctx.ds.getTagValues({ key: 'test' });
+      expect(metricFindQueryMock).toHaveBeenCalled();
     });
   });
 
@@ -354,6 +374,9 @@ describe('InfluxDataSource', () => {
           interpolationVar: { text: text, value: text },
           interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },
         });
+        if (!query.tags?.length) {
+          throw new Error('Tags are not defined');
+        }
         const value = query.tags[0].value;
         const scopedVars = 'interpolationText|interpolationText2';
         expect(value).toBe(scopedVars);

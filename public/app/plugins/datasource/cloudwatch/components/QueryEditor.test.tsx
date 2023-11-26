@@ -46,6 +46,15 @@ jest.mock('./SQLCodeEditor', () => ({
 }));
 
 export { SQLCodeEditor } from './SQLCodeEditor';
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      cloudWatchCrossAccountQuerying: true,
+    },
+  },
+}));
 
 describe('QueryEditor should render right editor', () => {
   describe('when using grafana 6.3.0 metric query', () => {
@@ -118,7 +127,7 @@ describe('QueryEditor should render right editor', () => {
         statistic: 'Average',
       } as CloudWatchQuery;
       render(<QueryEditor {...props} query={query} />);
-      expect(await screen.findByText('Select Log Groups')).toBeInTheDocument();
+      expect(await screen.findByText('Select log groups')).toBeInTheDocument();
     });
   });
 

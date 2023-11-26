@@ -1,3 +1,3 @@
 {{> body }}
 
-Sent by KensoBI v[[.BuildVersion]] (c) [[now | date "2006"]] KensoBI Labs
+Sent by Grafana v[[.BuildVersion]] (c) [[now | date "2006"]] Grafana Labs
