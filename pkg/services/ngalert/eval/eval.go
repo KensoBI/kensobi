@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
@@ -247,10 +248,26 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 	req := &expr.Request{
 		OrgId:   ctx.User.OrgID,
 		Headers: buildDatasourceHeaders(ctx.Ctx),
-		User:    ctx.User,
 	}
 
-	datasources := make(map[string]*datasources.DataSource, len(data))
+	dsMap := make(map[string]*datasources.DataSource, len(data))
+	getDs := func(uid string) (*datasources.DataSource, error) {
+		ds, ok := dsMap[uid]
+
+		if !ok {
+			if expr.IsDataSource(uid) {
+				ds = expr.DataSourceModel()
+			} else {
+				var err error
+				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, uid, ctx.User, true)
+				if err != nil {
+					return nil, err
+				}
+			}
+			dsMap[uid] = ds
+		}
+		return ds, nil
+	}
 
 	for _, q := range data {
 		model, err := q.GetModel()
@@ -267,29 +284,56 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 			return nil, fmt.Errorf("failed to retrieve maxDatapoints from '%s': %w", q.RefID, err)
 		}
 
-		ds, ok := datasources[q.DatasourceUID]
-		if !ok {
-			switch nodeType := expr.NodeTypeFromDatasourceUID(q.DatasourceUID); nodeType {
-			case expr.TypeDatasourceNode:
-				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, false /*skipCache*/)
-			default:
-				ds, err = expr.DataSourceModelFromNodeType(nodeType)
-			}
-			if err != nil {
-				return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
-			}
-			datasources[q.DatasourceUID] = ds
+		ds, err := getDs(q.DatasourceUID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
 		}
 
-		req.Queries = append(req.Queries, expr.Query{
-			TimeRange:     q.RelativeTimeRange.ToTimeRange(),
-			DataSource:    ds,
-			JSON:          model,
-			Interval:      interval,
-			RefID:         q.RefID,
-			MaxDataPoints: maxDatapoints,
-			QueryType:     q.QueryType,
-		})
+		if ds.Type == "kensobi-feature-datasource" {
+			pluginUid, err := ds.JsonData.GetPath("dbPlugin", "ref", "uid").String()
+			if err != nil {
+				continue
+			}
+			proxyDs, err := getDs(pluginUid)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get proxy datasource build query '%s': %w", q.RefID, err)
+			}
+
+			timeseriesQuery, err := q.GetModelJson().GetPath("finalQuery", "timeseries").String()
+			if err != nil {
+				continue
+			}
+
+			proxyModel, err := simplejson.NewFromAny(map[string]interface{}{
+				"format": "time_series",
+				"rawSql": timeseriesQuery,
+			}).MarshalJSON()
+
+			if err != nil {
+				continue
+			}
+
+			req.Queries = append(req.Queries, expr.Query{
+				TimeRange:     q.RelativeTimeRange.ToTimeRange(),
+				DataSource:    proxyDs,
+				JSON:          proxyModel,
+				Interval:      interval,
+				RefID:         q.RefID,
+				MaxDataPoints: maxDatapoints,
+				QueryType:     q.QueryType,
+			})
+
+		} else {
+			req.Queries = append(req.Queries, expr.Query{
+				TimeRange:     q.RelativeTimeRange.ToTimeRange(),
+				DataSource:    ds,
+				JSON:          model,
+				Interval:      interval,
+				RefID:         q.RefID,
+				MaxDataPoints: maxDatapoints,
+				QueryType:     q.QueryType,
+			})
+		}
 	}
 	return req, nil
 }
@@ -302,20 +346,14 @@ type NumberValueCapture struct {
 }
 
 func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.QueryDataResponse) ExecutionResults {
-	// captures contains the values of all instant queries and expressions for each dimension
-	captures := make(map[string]map[data.Fingerprint]NumberValueCapture)
-	captureFn := func(refID string, labels data.Labels, value *float64) {
-		m := captures[refID]
-		if m == nil {
-			m = make(map[data.Fingerprint]NumberValueCapture)
-		}
-		fp := labels.Fingerprint()
-		m[fp] = NumberValueCapture{
+	// eval captures for the '__value_string__' annotation and the Value property of the API response.
+	captures := make([]NumberValueCapture, 0, len(execResp.Responses))
+	captureVal := func(refID string, labels data.Labels, value *float64) {
+		captures = append(captures, NumberValueCapture{
 			Var:    refID,
 			Value:  value,
 			Labels: labels.Copy(),
-		}
-		captures[refID] = m
+		})
 	}
 
 	// datasourceUIDsForRefIDs is a short-lived lookup table of RefID to DatasourceUID
@@ -324,6 +362,8 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 	for _, next := range c.Data {
 		datasourceUIDsForRefIDs[next.RefID] = next.DatasourceUID
 	}
+	// datasourceExprUID is a special DatasourceUID for expressions
+	datasourceExprUID := strconv.FormatInt(expr.DatasourceID, 10)
 
 	result := ExecutionResults{Results: make(map[string]data.Frames)}
 	for refID, res := range execResp.Responses {
@@ -345,7 +385,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 			hasNoFrames := len(res.Frames) == 0
 			hasNoFields := len(res.Frames) == 1 && len(res.Frames[0].Fields) == 0
 			if hasNoFrames || hasNoFields {
-				if s, ok := datasourceUIDsForRefIDs[refID]; ok && expr.NodeTypeFromDatasourceUID(s) == expr.TypeDatasourceNode { // TODO perhaps extract datasource UID from ML expression too.
+				if s, ok := datasourceUIDsForRefIDs[refID]; ok && s != datasourceExprUID {
 					result.NoData[refID] = s
 				}
 			}
@@ -361,7 +401,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 			if frame.Fields[0].Len() == 1 {
 				v = frame.At(0, 0).(*float64) // type checked above
 			}
-			captureFn(frame.RefID, frame.Fields[0].Labels, v)
+			captureVal(frame.RefID, frame.Fields[0].Labels, v)
 		}
 
 		if refID == c.Condition {
@@ -383,27 +423,13 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 
 		if len(frame.Fields) == 1 {
 			theseLabels := frame.Fields[0].Labels
-			fp := theseLabels.Fingerprint()
-
-			for _, fps := range captures {
-				// First look for a capture whose labels are an exact match
-				if v, ok := fps[fp]; ok {
+			for _, cap := range captures {
+				// matching labels are equal labels, or when one set of labels includes the labels of the other.
+				if theseLabels.Equals(cap.Labels) || theseLabels.Contains(cap.Labels) || cap.Labels.Contains(theseLabels) {
 					if frame.Meta.Custom == nil {
 						frame.Meta.Custom = []NumberValueCapture{}
 					}
-					frame.Meta.Custom = append(frame.Meta.Custom.([]NumberValueCapture), v)
-				} else {
-					// If no exact match was found, look for captures whose labels are either subsets
-					// or supersets
-					for _, v := range fps {
-						// matching labels are equal labels, or when one set of labels includes the labels of the other.
-						if theseLabels.Equals(v.Labels) || theseLabels.Contains(v.Labels) || v.Labels.Contains(theseLabels) {
-							if frame.Meta.Custom == nil {
-								frame.Meta.Custom = []NumberValueCapture{}
-							}
-							frame.Meta.Custom = append(frame.Meta.Custom.([]NumberValueCapture), v)
-						}
-					}
+					frame.Meta.Custom = append(frame.Meta.Custom.([]NumberValueCapture), cap)
 				}
 			}
 		}
@@ -640,24 +666,15 @@ func (e *evaluatorImpl) Validate(ctx EvaluationContext, condition models.Conditi
 		return err
 	}
 	for _, query := range req.Queries {
-		if query.DataSource == nil {
+		if query.DataSource == nil || expr.IsDataSource(query.DataSource.UID) {
 			continue
 		}
-		switch expr.NodeTypeFromDatasourceUID(query.DataSource.UID) {
-		case expr.TypeDatasourceNode:
-			p, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
-			if !found { // technically this should fail earlier during datasource resolution phase.
-				return fmt.Errorf("datasource refID %s could not be found: %w", query.RefID, plugins.ErrPluginUnavailable)
-			}
-			if !p.Backend {
-				return fmt.Errorf("datasource refID %s is not a backend datasource", query.RefID)
-			}
-		case expr.TypeMLNode:
-			_, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
-			if !found {
-				return fmt.Errorf("datasource refID %s could not be found: %w", query.RefID, plugins.ErrPluginUnavailable)
-			}
-		case expr.TypeCMDNode:
+		p, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
+		if !found { // technically this should fail earlier during datasource resolution phase.
+			return fmt.Errorf("datasource refID %s could not be found: %w", query.RefID, plugins.ErrPluginUnavailable)
+		}
+		if !p.Backend {
+			return fmt.Errorf("datasource refID %s is not a backend datasource", query.RefID)
 		}
 	}
 	_, err = e.create(condition, req)

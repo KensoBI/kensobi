@@ -27,6 +27,7 @@ export function AppChrome({ children }: Props) {
     [styles.content]: true,
     [styles.contentNoSearchBar]: searchBarHidden,
     [styles.contentChromeless]: state.chromeless,
+    [styles.printHide]: true,
   });
 
   // Chromeless routes are without topNav, mega menu, search & command palette
@@ -42,10 +43,10 @@ export function AppChrome({ children }: Props) {
     >
       {!state.chromeless && (
         <>
-          <LinkButton className={styles.skipLink} href="#pageContent">
+          <LinkButton className={`${styles.skipLink} dontPrint`} href="#pageContent">
             Skip to main content
           </LinkButton>
-          <div className={cx(styles.topNav)}>
+          <div className={`${cx(styles.topNav)} dontPrint`}>
             {!searchBarHidden && <TopSearchBar />}
             <NavToolbar
               searchBarHidden={searchBarHidden}
@@ -133,5 +134,10 @@ const getStyles = (theme: GrafanaTheme2) => {
         zIndex: theme.zIndex.portal,
       },
     }),
+    printHide: css`
+      @media print {
+        padding: 0 !important;
+      }
+    `,
   };
 };
