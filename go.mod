@@ -78,7 +78,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // @grafana/backend-platform
 	github.com/jung-kurt/gofpdf v1.16.2 // @grafana/backend-platform
 	github.com/lib/pq v1.10.6 // @grafana/backend-platform
-	github.com/linkedin/goavro/v2 v2.10.0 // @grafana/backend-platform
+	github.com/linkedin/goavro/v2 v2.12.0 // @grafana/backend-platform
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/backend-platform
 	github.com/magefile/mage v1.15.0 // @grafana/grafana-delivery
 	github.com/mattn/go-isatty v0.0.18 // @grafana/backend-platform
