@@ -66,6 +66,7 @@ export class Branding {
   static LoginBoxBackground = LoginBoxBackground;
   static AppTitle = 'KensoBI';
   static LoginTitle = 'Welcome to KensoBI';
+  static HideEdition = true;
   static GetLoginSubTitle = (): null | string => {
     return null;
   };

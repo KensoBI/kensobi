@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Modal, Button, Label, useStyles2, RadioButtonGroup } from '@grafana/ui';
+import { Button, Label, Modal, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { TestReceiversAlert } from 'app/plugins/datasource/alertmanager/types';
 import { Annotations, Labels } from 'app/types/unified-alerting-dto';
 
-import AnnotationsField from '../../rule-editor/AnnotationsField';
+import { defaultAnnotations } from '../../../utils/constants';
+import AnnotationsStep from '../../rule-editor/AnnotationsStep';
 import LabelsField from '../../rule-editor/LabelsField';
 
 interface Props {
@@ -34,7 +35,7 @@ enum NotificationType {
 const notificationOptions = Object.values(NotificationType).map((value) => ({ label: value, value: value }));
 
 const defaultValues: FormFields = {
-  annotations: [{ key: '', value: '' }],
+  annotations: [...defaultAnnotations],
   labels: [{ key: '', value: '' }],
 };
 
@@ -89,7 +90,7 @@ export const TestContactPointModal = ({ isOpen, onDismiss, onTest }: Props) => {
                 use custom templates and messages.
               </div>
               <div className={styles.section}>
-                <AnnotationsField />
+                <AnnotationsStep />
               </div>
               <div className={styles.section}>
                 <LabelsField />

@@ -25,12 +25,23 @@ jest.mock('./XrayLinkConfig', () => ({
 
 const putMock = jest.fn();
 const getMock = jest.fn();
+const mockAppEvents = {
+  subscribe: () => ({ unsubscribe: jest.fn() }),
+};
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     put: putMock,
     get: getMock,
   }),
+  getAppEvents: () => mockAppEvents,
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    awsAssumeRoleEnabled: true,
+    featureToggles: {
+      cloudWatchCrossAccountQuerying: true,
+    },
+  },
 }));
 
 const props: Props = {
@@ -150,7 +161,7 @@ describe('Render', () => {
 
   it('should display log group selector field', async () => {
     setup();
-    await waitFor(async () => expect(await screen.getByText('Select Log Groups')).toBeInTheDocument());
+    await waitFor(async () => expect(screen.getByText('Select log groups')).toBeInTheDocument());
   });
 
   it('should only display the first two default log groups and show all of them when clicking "Show all" button', async () => {
@@ -204,19 +215,9 @@ describe('Render', () => {
   });
 
   it('should show error message if Select log group button is clicked when data source is never saved', async () => {
-    const SAVED_VERSION = undefined;
-    const newProps = {
-      ...props,
-      options: {
-        ...props.options,
-        version: SAVED_VERSION,
-      },
-    };
-
-    render(<ConfigEditor {...newProps} />);
-
-    await waitFor(() => expect(screen.getByText('Select Log Groups')).toBeInTheDocument());
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    setup({ version: 1 });
+    await waitFor(() => expect(screen.getByText('Select log groups')).toBeInTheDocument());
+    await userEvent.click(screen.getByText('Select log groups'));
     await waitFor(() =>
       expect(screen.getByText('You need to save the data source before adding log groups.')).toBeInTheDocument()
     );
@@ -232,7 +233,7 @@ describe('Render', () => {
       },
     };
     const { rerender } = render(<ConfigEditor {...newProps} />);
-    await waitFor(() => expect(screen.getByText('Select Log Groups')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Select log groups')).toBeInTheDocument());
     const rerenderProps = {
       ...newProps,
       options: {
@@ -245,7 +246,7 @@ describe('Render', () => {
     };
     rerender(<ConfigEditor {...rerenderProps} />);
     await waitFor(() => expect(screen.getByText('AWS SDK Default')).toBeInTheDocument());
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     await waitFor(() =>
       expect(
         screen.getByText(
@@ -256,25 +257,24 @@ describe('Render', () => {
   });
 
   it('should open log group selector if Select log group button is clicked when data source has saved changes', async () => {
-    const SAVED_VERSION = undefined;
     const newProps = {
       ...props,
       options: {
         ...props.options,
-        version: SAVED_VERSION,
+        version: 1,
       },
     };
     const { rerender } = render(<ConfigEditor {...newProps} />);
-    await waitFor(() => expect(screen.getByText('Select Log Groups')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Select log groups')).toBeInTheDocument());
     const rerenderProps = {
       ...newProps,
       options: {
         ...newProps.options,
-        version: 1,
+        version: 2,
       },
     };
     rerender(<ConfigEditor {...rerenderProps} />);
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     await waitFor(() => expect(screen.getByText('Log group name prefix')).toBeInTheDocument());
   });
 });

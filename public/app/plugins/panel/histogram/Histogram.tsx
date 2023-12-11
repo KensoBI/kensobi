@@ -23,7 +23,7 @@ import {
   UPLOT_AXIS_FONT_SIZE,
 } from '@grafana/ui';
 
-import { defaultPanelFieldConfig, PanelFieldConfig, PanelOptions } from './panelcfg.gen';
+import { defaultFieldConfig, FieldConfig, Options } from './panelcfg.gen';
 
 function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;
@@ -34,7 +34,7 @@ function incrRoundUp(num: number, incr: number) {
 }
 
 export interface HistogramProps extends Themeable2 {
-  options: PanelOptions; // used for diff
+  options: Options; // used for diff
   alignedFrame: DataFrame; // This could take HistogramFields
   bucketSize: number;
   width: number;
@@ -47,7 +47,7 @@ export interface HistogramProps extends Themeable2 {
 
 export function getBucketSize(frame: DataFrame) {
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
-  return frame.fields[1].values.get(0) - frame.fields[0].values.get(0);
+  return frame.fields[1].values[0] - frame.fields[0].values[0];
 }
 
 const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
@@ -194,7 +194,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     field.state = field.state ?? {};
     field.state.seriesIndex = seriesIndex++;
 
-    const customConfig: PanelFieldConfig = { ...defaultPanelFieldConfig, ...field.config.custom };
+    const customConfig: FieldConfig = { ...defaultFieldConfig, ...field.config.custom };
 
     const scaleKey = 'y';
     const colorMode = getFieldColorModeForField(field);
@@ -233,7 +233,7 @@ const preparePlotData = (frame: DataFrame) => {
 
   for (const field of frame.fields) {
     if (field.name !== histogramFrameBucketMaxFieldName) {
-      data.push(field.values.toArray());
+      data.push(field.values);
     }
   }
 
@@ -323,13 +323,7 @@ export class Histogram extends React.Component<HistogramProps, State> {
     return (
       <VizLayout width={width} height={height} legend={this.renderLegend(config)}>
         {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart
-            config={this.state.config!}
-            data={this.state.alignedData}
-            width={vizWidth}
-            height={vizHeight}
-            timeRange={null as any}
-          >
+          <UPlotChart config={this.state.config!} data={this.state.alignedData} width={vizWidth} height={vizHeight}>
             {children ? children(config, alignedFrame) : null}
           </UPlotChart>
         )}

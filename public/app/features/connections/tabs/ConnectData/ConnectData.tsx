@@ -5,7 +5,7 @@ import { PluginType } from '@grafana/data';
 import { useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { Sorters } from 'app/features/plugins/admin/helpers';
-import { useGetAllWithFilters } from 'app/features/plugins/admin/state/hooks';
+import { useGetAll } from 'app/features/plugins/admin/state/hooks';
 import { AccessControlAction } from 'app/types';
 
 import { ROUTES } from '../../constants';
@@ -28,7 +28,7 @@ const getStyles = () => ({
   `,
 });
 
-export function ConnectData() {
+export function AddNewConnection() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isNoAccessModalOpen, setIsNoAccessModalOpen] = useState(false);
   const [focusedItem, setFocusedItem] = useState<CardGridItem | null>(null);
@@ -39,12 +39,13 @@ export function ConnectData() {
     setSearchTerm(e.currentTarget.value.toLowerCase());
   };
 
-  const { isLoading, error, plugins } = useGetAllWithFilters({
-    query: searchTerm,
-    filterBy: '',
-    filterByType: PluginType.datasource,
-    sortBy: Sorters.kenso,
-  });
+  const { isLoading, error, plugins } = useGetAll(
+    {
+      keyword: searchTerm,
+      type: PluginType.datasource,
+    },
+    Sorters.kenso
+  );
 
   const cardGridItems = useMemo(
     () =>
@@ -54,6 +55,7 @@ export function ConnectData() {
         description: plugin.description,
         logo: plugin.info.logos.small,
         url: ROUTES.DataSourcesDetails.replace(':id', plugin.id),
+        angularDetected: plugin.angularDetected,
       })),
     [plugins]
   );

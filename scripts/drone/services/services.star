@@ -10,10 +10,11 @@ load(
 def integration_test_services_volumes():
     return [
         {"name": "postgres", "temp": {"medium": "memory"}},
-        {"name": "mysql", "temp": {"medium": "memory"}},
+        {"name": "mysql57", "temp": {"medium": "memory"}},
+        {"name": "mysql80", "temp": {"medium": "memory"}},
     ]
 
-def integration_test_services(edition):
+def integration_test_services():
     services = [
         {
             "name": "postgres",
@@ -29,7 +30,7 @@ def integration_test_services(edition):
             ],
         },
         {
-            "name": "mysql",
+            "name": "mysql57",
             "image": images["mysql5_image"],
             "environment": {
                 "MYSQL_ROOT_PASSWORD": "rootpass",
@@ -37,25 +38,32 @@ def integration_test_services(edition):
                 "MYSQL_USER": "grafana",
                 "MYSQL_PASSWORD": "password",
             },
-            "volumes": [{"name": "mysql", "path": "/var/lib/mysql"}],
+            "volumes": [{"name": "mysql57", "path": "/var/lib/mysql"}],
+            "commands": ["docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci"],
+        },
+        {
+            "name": "mysql80",
+            "image": images["mysql8_image"],
+            "environment": {
+                "MYSQL_ROOT_PASSWORD": "rootpass",
+                "MYSQL_DATABASE": "grafana_tests",
+                "MYSQL_USER": "grafana",
+                "MYSQL_PASSWORD": "password",
+            },
+            "volumes": [{"name": "mysql80", "path": "/var/lib/mysql"}],
+            "commands": ["docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password"],
+        },
+        {
+            "name": "redis",
+            "image": images["redis_alpine_image"],
+            "environment": {},
+        },
+        {
+            "name": "memcached",
+            "image": images["memcached_alpine_image"],
+            "environment": {},
         },
     ]
-
-    if edition in ("enterprise", "enterprise2"):
-        services.extend(
-            [
-                {
-                    "name": "redis",
-                    "image": "redis:6.2.1-alpine",
-                    "environment": {},
-                },
-                {
-                    "name": "memcached",
-                    "image": "memcached:1.6.9-alpine",
-                    "environment": {},
-                },
-            ],
-        )
 
     return services
 
