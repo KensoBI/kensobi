@@ -119,7 +119,7 @@ require (
 	gonum.org/v1/gonum v0.12.0 // @grafana/observability-metrics
 	google.golang.org/api v0.114.0 // @grafana/backend-platform
 	google.golang.org/grpc v1.55.0 // @grafana/plugins-platform-backend
-	google.golang.org/protobuf v1.30.0 // @grafana/plugins-platform-backend
+	google.golang.org/protobuf v1.31.0 // @grafana/plugins-platform-backend
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ini.v1 v1.67.0 // @grafana/alerting-squad-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/backend-platform
@@ -235,7 +235,7 @@ require (
 	github.com/armon/go-radix v1.0.0 // @grafana/grafana-app-platform-squad
 	github.com/blugelabs/bluge v0.1.9 // @grafana/backend-platform
 	github.com/blugelabs/bluge_segment_api v0.2.0 // @grafana/backend-platform
-	github.com/bufbuild/connect-go v1.4.1 // @grafana/observability-traces-and-profiling
+	github.com/bufbuild/connect-go v1.10.0 // @grafana/observability-traces-and-profiling
 	github.com/dlmiddlecote/sqlstats v1.0.2 // @grafana/backend-platform
 	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-delivery
 	github.com/getkin/kin-openapi v0.115.0 // @grafana/grafana-operator-experience-squad
@@ -256,8 +256,8 @@ require (
 )
 
 require (
-	buf.build/gen/go/parca-dev/parca/bufbuild/connect-go v1.4.1-20221222094228-8b1d3d0f62e6.1 // @grafana/observability-traces-and-profiling
-	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.28.1-20221222094228-8b1d3d0f62e6.4 // @grafana/observability-traces-and-profiling
+	buf.build/gen/go/parca-dev/parca/bufbuild/connect-go v1.10.0-20240115164059-b8281ff5879f.1 // @grafana/observability-traces-and-profiling
+	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.31.0-20240115164059-b8281ff5879f.1 // @grafana/observability-traces-and-profiling
 	github.com/Masterminds/semver/v3 v3.1.1 // @grafana/grafana-delivery
 	github.com/alicebob/miniredis/v2 v2.30.1 // @grafana/alerting-squad-backend
 	github.com/dave/dst v0.27.2 // @grafana/grafana-as-code
