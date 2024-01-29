@@ -158,12 +158,12 @@ require (
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-openapi/analysis v0.21.4 // indirect
 	github.com/go-openapi/errors v0.20.3 // indirect
-	github.com/go-openapi/jsonpointer v0.19.6 // indirect
+	github.com/go-openapi/jsonpointer v0.20.2 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/loads v0.21.2 // @grafana/alerting-squad-backend
 	github.com/go-openapi/runtime v0.25.0 // indirect
 	github.com/go-openapi/spec v0.20.8 // indirect
-	github.com/go-openapi/swag v0.22.3 // indirect
+	github.com/go-openapi/swag v0.22.8 // indirect
 	github.com/go-openapi/validate v0.22.1 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // @grafana/backend-platform
 	github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe // indirect
@@ -173,7 +173,7 @@ require (
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/flatbuffers v2.0.8+incompatible // indirect
 	github.com/googleapis/gax-go/v2 v2.7.1 // @grafana/backend-platform
-	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/grafana/grafana-google-sdk-go v0.1.0 // @grafana/partner-datasources
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -238,7 +238,7 @@ require (
 	github.com/bufbuild/connect-go v1.4.1 // @grafana/observability-traces-and-profiling
 	github.com/dlmiddlecote/sqlstats v1.0.2 // @grafana/backend-platform
 	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-delivery
-	github.com/getkin/kin-openapi v0.115.0 // @grafana/grafana-operator-experience-squad
+	github.com/getkin/kin-openapi v0.123.0 // @grafana/grafana-operator-experience-squad
 	github.com/golang-migrate/migrate/v4 v4.7.0 // @grafana/backend-platform
 	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-delivery
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
@@ -343,7 +343,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/memberlist v0.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/invopop/yaml v0.1.0 // indirect
+	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
@@ -365,9 +365,9 @@ require (
 	github.com/ory/x v0.0.214 // indirect
 	github.com/pborman/uuid v1.2.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
-	github.com/perimeterx/marshmallow v1.1.4 // indirect
+	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/rivo/uniseg v0.3.4 // indirect
-	github.com/rogpeppe/go-internal v1.10.0 // indirect
+	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/rueian/rueidis v0.0.100 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
